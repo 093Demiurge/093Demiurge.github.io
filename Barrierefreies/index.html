@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Barrierefreies Design: Fallstudie Tianjin</title>
+    <style>
+        :root {
+            --primary-orange: #fca311;
+            --bg-light-orange: #ffe3d1;
+            --border-orange: #e59866;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: #fafafa;
+            color: #333;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; /* 禁止全屏滚动 */
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        /* 顶部紧凑标题栏 */
+        .header-section {
+            flex-shrink: 0;
+            margin-bottom: 8px;
+        }
+        .header-title {
+            color: var(--primary-orange);
+            font-size: 1rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+        .header-title::before {
+            content: "";
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-orange);
+            margin-right: 6px;
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #555;
+        }
+        .description {
+            font-size: 0.75rem;
+            line-height: 1.2;
+            color: #666;
+        }
+        .date-text {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* 四宫格区域：平分剩余空间的 55% */
+        .grid-container {
+            flex: 55; 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 8px;
+            min-height: 0; /* 允许子元素压缩 */
+        }
+
+        .category-box {
+            border: 1px solid var(--border-orange);
+            border-radius: 4px;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .category-title {
+            background-color: #fff;
+            padding: 4px 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border-orange);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* 文字长了自动省略号 */
+        }
+
+        /* 接收区域 */
+        .drop-zone {
+            background-color: var(--bg-light-orange);
+            flex: 1;
+            padding: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-content: flex-start;
+            overflow-y: auto; /* 万一放多了允许内部微滚 */
+            transition: background-color 0.2s ease;
+        }
+
+        .drop-zone.drag-over {
+            background-color: #f7c5a8;
+            border: 1px dashed var(--primary-orange);
+        }
+
+        /* 底部资源池区域：平分剩余空间的 35% */
+        .pool-section {
+            flex: 35;
+            border-top: 1px dashed #ccc;
+            padding-top: 6px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .pool-title {
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+        .image-pool {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            flex: 1;
+            padding: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            overflow-y: auto; /* 允许资源池内部上下滚动查看缩略图 */
+            align-content: flex-start;
+        }
+
+        /* 缩略图样式大幅缩小，适配手机一屏 */
+        .draggable-thumb {
+            height: 100px;
+            /* width: 45px; */
+            background-color: #34495e;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: bold;
+            border-radius: 3px;
+            user-select: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            object-fit: cover;
+            touch-action: none; /* 禁用浏览器默认拖动行为，交给JS处理 */
+        }
+        
+        /* 手机端拖拽时的影子样式 */
+        .dragging {
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <div class="header-title">Fallstudie Tianjin (China)</div>
+        <div class="subtitle">Fotoalbum-Spiel</div>
+        <div class="description">
+            Kategorisieren Sie die Probleme per Drag & Drop.
+            <span class="date-text">(1. Juni 2026)</span>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <div class="category-box">
+            <div class="category-title" title="① Eingeschränkte Rollstuhlgängigkeit">① Rollstuhlgängigkeit</div>
+            <div class="drop-zone" id="zone-1"></div>
+        </div>
+        
+        <div class="category-box">
+            <div class="category-title" title="② Fehlende barrierefreie Unterstützungssysteme">② Unterstützungssysteme</div>
+            <div class="drop-zone" id="zone-2"></div>
+        </div>
+
+        <div class="category-box">
+            <div class="category-title" title="③ Fehlplanung / Zweckentfremdung">③ Zweckentfremdung</div>
+            <div class="drop-zone" id="zone-3"></div>
+        </div>
+
+        <div class="category-box">
+            <div class="category-title" title="④ Mangelnde Instandhaltung">④ Instandhaltung</div>
+            <div class="drop-zone" id="zone-4"></div>
+        </div>
+    </div>
+
+    <div class="pool-section">
+        <div class="pool-title">Bilderpool:</div>
+        <div class="image-pool" id="image-pool">
+            <img src="1.jpg" id="img-1" class="draggable-thumb" draggable="true" alt="1">
+            <img src="2.jpg" id="img-2" class="draggable-thumb" draggable="true" alt="2">
+            <img src="3.jpg" id="img-3" class="draggable-thumb" draggable="true" alt="3">
+            <img src="4.jpg" id="img-4" class="draggable-thumb" draggable="true" alt="4">
+            <img src="5.jpg" id="img-5" class="draggable-thumb" draggable="true" alt="5">
+            <img src="6.jpg" id="img-6" class="draggable-thumb" draggable="true" alt="6">
+            <img src="7.jpg" id="img-7" class="draggable-thumb" draggable="true" alt="7">
+            <img src="8.jpg" id="img-8" class="draggable-thumb" draggable="true" alt="8">
+            <img src="9.jpg" id="img-9" class="draggable-thumb" draggable="true" alt="9">
+            <img src="10.jpg" id="img-10" class="draggable-thumb" draggable="true" alt="10">
+            <img src="11.jpg" id="img-11" class="draggable-thumb" draggable="true" alt="11">
+        </div>
+    </div>
+
+    <script>
+        const draggableItems = document.querySelectorAll('.draggable-thumb');
+        const dropZones = document.querySelectorAll('.drop-zone, .image-pool');
+
+        // --- 1. PC端原生 Drag & Drop 事件 ---
+        draggableItems.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', e.target.id);
+            });
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if(zone.classList.contains('drop-zone')) zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const id = e.dataTransfer.getData('text/plain');
+                const draggedElement = document.getElementById(id);
+                if (draggedElement) zone.appendChild(draggedElement);
+            });
+        });
+
+        // --- 2. 移动端 Touch 事件独占适配 ---
+        let activeItem = null;
+
+        draggableItems.forEach(item => {
+            item.addEventListener('touchstart', function(e) {
+                activeItem = this;
+                this.classList.add('dragging');
+            }, { passive: true });
+
+            item.addEventListener('touchmove', function(e) {
+                if (!activeItem) return;
+                // 触摸移动时高亮触点下的目标区域
+                const touch = e.touches[0];
+                const targetZone = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                dropZones.forEach(zone => zone.classList.remove('drag-over'));
+                if (targetZone) {
+                    const closestZone = targetZone.closest('.drop-zone, .image-pool');
+                    if (closestZone && closestZone.classList.contains('drop-zone')) {
+                        closestZone.classList.add('drag-over');
+                    }
+                }
+            }, { passive: true });
+
+            item.addEventListener('touchend', function(e) {
+                if (!activeItem) return;
+                this.classList.remove('dragging');
+                
+                // 获取手指抬起时的屏幕坐标
+                const touch = e.changedTouches[0];
+                const targetZone = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                if (targetZone) {
+                    // 寻找到最近的合法放置容器
+                    const closestZone = targetZone.closest('.drop-zone, .image-pool');
+                    if (closestZone) {
+                        closestZone.appendChild(activeItem);
+                    }
+                }
+                
+                // 清理样式
+                dropZones.forEach(zone => zone.classList.remove('drag-over'));
+                activeItem = null;
+            });
+        });
+    </script>
+</body>
+</html>
